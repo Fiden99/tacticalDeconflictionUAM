@@ -202,8 +202,10 @@ repeat
 			{
 				for {(a,b) in E: a==x or b==x}
 				{
-					let dMCF[f1,a,b] := min(sqrt(alpha) * dMCF[f1,a,b],1e5);
-					let dMCF[f2,a,b] := min(sqrt(alpha) * dMCF[f2,a,b],1e5);
+					if (f1<f2) then
+						let dMCF[f1,a,b] := min(sqrt(alpha) * dMCF[f1,a,b],1e5);
+					else
+						let dMCF[f2,a,b] := min(sqrt(alpha) * dMCF[f2,a,b],1e5);
 				}
 			}
 		}
@@ -214,22 +216,32 @@ repeat
 				for {(fl1,fl2,a,b) in trail1 : a==x and fl1==f1 and fl2==f2 and (trail13[f1,f2,a,b].slack == 0 or trail14[f1,f2,a,b].slack==0)}
 				{
 					print "trail1,%d,%d,%d,%d",fl1,fl2,a,b;
-					let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
-					let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
+					if (fl1<fl2) then
+						let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
+					else
+						let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
 				}
 				for {(fl1,fl2,a,b) in trail2 : b==x and fl1==f1 and fl2==f2 and (trail23[f1,f2,a,b].slack==0 or trail24[f1,f2,a,b].slack==0)}
 				{
 					print "trail2, %d,%d,%d,%d",fl1,fl2,a,b;
-					let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
-					let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
+					if (fl1<fl2) then
+						let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
+					else
+						let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
 				}
 				for {(fl1,fl2,a,b,c) in merge : a==x and fl1==f1 and fl2==f2 and (merge3[f1,f2,a,b,c].slack==0 or merge4[f1,f2,a,b,c].slack==0)}
 				{
 					print"merge, %d,%d,%d,%d,%d",fl1,fl2,a,b,c;
-					let dMCF[fl1,b,a] := min(sqrt(alpha) * dMCF[fl1,b,a],1e5);
-					let dMCF[fl1,c,a] := min(sqrt(alpha) * dMCF[fl1,c,a],1e5);
-					let dMCF[fl2,b,a] := min(sqrt(alpha) * dMCF[fl2,b,a],1e5);
-					let dMCF[fl2,c,a] := min(sqrt(alpha) * dMCF[fl2,c,a],1e5);
+					if (fl1<fl2) then
+					{
+						let dMCF[fl1,b,a] := min(sqrt(alpha) * dMCF[fl1,b,a],1e5);
+						let dMCF[fl1,c,a] := min(sqrt(alpha) * dMCF[fl1,c,a],1e5);
+					}
+					else
+					{
+						let dMCF[fl2,b,a] := min(sqrt(alpha) * dMCF[fl2,b,a],1e5);
+						let dMCF[fl2,c,a] := min(sqrt(alpha) * dMCF[fl2,c,a],1e5);
+					}
 				}
 				/*for {(fl1,fl2,a,b,c) in merge2 : a==x and fl1==f1 and fl2==f2 and (merge3_2[f1,f2,a,b,c].slack==0 or merge4_2[f1,f2,a,b,c].slack==0)}
 				{
@@ -241,10 +253,16 @@ repeat
 				for {(fl1,fl2,a,b,c) in split : a==x and fl1==f1 and fl2==f2 and (split3[f1,f2,a,b,c].slack==0 or split4[f1,f2,a,b,c].slack==0)}
 				{
 					print "split,%d,%d,%d,%d,%d",fl1,fl2,a,b,c;
-					let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
-					let dMCF[fl1,a,c] := min(sqrt(alpha) * dMCF[fl1,a,c],1e5);
-					let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
-					let dMCF[fl2,a,c] := min(sqrt(alpha) * dMCF[fl2,a,c],1e5);
+					if (fl1<fl2) then
+					{
+						let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
+						let dMCF[fl1,a,c] := min(sqrt(alpha) * dMCF[fl1,a,c],1e5);
+					}
+					else
+					{
+						let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
+						let dMCF[fl2,a,c] := min(sqrt(alpha) * dMCF[fl2,a,c],1e5);
+					}
 				}
 				/*for {(fl1,fl2,a,b,c) in split2 : a==x and fl1==f1 and fl2==f2 and (split3_2[f1,f2,a,b,c].slack==0 or split4_2[f1,f2,a,b,c].slack==0)}
 				{
@@ -256,10 +274,17 @@ repeat
 				for {(fl1,fl2,a,b,c) in diver1: a==x and fl1==f1 and fl2==f2 and (diver3_1[f1,f2,a,b,c].slack==0 or diver4_1[f1,f2,a,b,c].slack==0)}
 				{
 					print"diver1,%d,%d,%d,%d,%d",fl1,fl2,a,b,c;
-					let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
-					let dMCF[fl1,c,a] := min(sqrt(alpha) * dMCF[fl1,c,a],1e5);
-					let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
-					let dMCF[fl2,c,a] := min(sqrt(alpha) * dMCF[fl2,c,a],1e5);
+					if (fl1<fl2) then
+					{
+						let dMCF[fl1,a,b] := min(sqrt(alpha) * dMCF[fl1,a,b],1e5);
+						let dMCF[fl1,c,a] := min(sqrt(alpha) * dMCF[fl1,c,a],1e5);
+
+					}					
+					else
+					{
+						let dMCF[fl2,a,b] := min(sqrt(alpha) * dMCF[fl2,a,b],1e5);
+						let dMCF[fl2,c,a] := min(sqrt(alpha) * dMCF[fl2,c,a],1e5);
+					}	
 				}
 				for {(fl1,fl2,a,b,c) in diver2: a==x and fl1==f1 and fl2==f2 and (diver3_2[f1,f2,a,b,c].slack==0 or diver4_2[f1,f2,a,b,c].slack==0)}
 				{
