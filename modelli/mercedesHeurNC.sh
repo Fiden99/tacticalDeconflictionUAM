@@ -19,3 +19,7 @@ datFileBase=$(basename "$datFile" .dat)
 
 # Esegui AMPL con il file .dat corrente
 absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchNC.run
+
+absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicNCGreater.run
+
+absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicNCSmaller.run
