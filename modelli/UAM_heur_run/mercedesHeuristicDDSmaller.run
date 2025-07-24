@@ -22,6 +22,7 @@ param iterations;
 let iterations:=0;
 #parametri d
 param alpha default 4;				#fattore moltiplicativo della distanza in caso di conflitto
+let alpha := num($alpha);
 param localMinParam default 3;		#dopo quante volte che trovo la stessa soluzione mi fermo
 param maxIteration default 20;		#numero massimo iterazioni dell'euristica
 param eps default 1e-4;				# valore che mi definse "l'errore" permesso per confrontare l'uguaglianza
@@ -62,6 +63,7 @@ param t_ear_temp{F,V} default 0;
 let {f in F} t_ear_temp[f,s[f]]:=t_hat_ear[f,s[f]];
 set tempSet within {E} default {};
 param gapUnf default 5;
+let gapUnf := num($gapUnf);
 
 for {f in F,(i,j) in E}
 	let dMCF[f,i,j]:= d[i,j];
@@ -305,7 +307,7 @@ repeat
 while (found==0);
 param result_name symbolic;
 #let result_name := sprintf("%s/results/30_heurMercedes.csv",($absPath));
-let result_name := sprintf("%s/results/afterMasterThesis/30_Smaller_heurMercedes_DD.csv",($absPath));
+let result_name := sprintf("%s/results/afterMasterThesis/30_Smaller_heurMercedes_DD_%d_%d.csv",($absPath),alpha,gapUnf);
 #"numero nodi","numero voli","tipologia","istanza", "risultato euristica","tempo euristica","optTime","numero iterazioni","iterazione dove trovo ottimo"
 if (obtainedSol == 0) then
 	printf "%s,30,+Inf,%f,+Inf,%d,+Inf\n",($datFile),(_ampl_elapsed_time + _total_solve_elapsed_time),iterations >> (result_name);
