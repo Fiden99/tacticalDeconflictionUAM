@@ -30,7 +30,7 @@ param totalTime;
 let totalTime:= totalSolveTime +elapsedTime;
 if (solve_result <> "solved" or (solve_result_num <= 405 and solve_result_num >= 400)) then
 {
-printf "%s,+Inf,%f,%f,%f,%d,%d,%d,%d,%d\n",($datFile),elapsedTime,totalSolveTime,totalTime,_nvars,_snvars,_ncons,_sncons,reducedTini >> (results_name);
+   printf "%s,+Inf,%f,%f,%f,%d,%d,%d,%d,%d\n",($datFile),elapsedTime,totalSolveTime,totalTime,_nvars,_snvars,_ncons,_sncons,reducedTini >> (results_name);
 }
 else
 {
@@ -44,5 +44,5 @@ printf "variable\t\t value\tLB\t\t\tUB \n" >(sol_name);
 for { j in 1.._nvars} {
    printf "let %s :=\t %d\t %f\t %f;\n", _varname[j], _var[j] , _var[j].lb, _var[j].ub > (sol_name);
 }
-expand fixOrder1,fixOrder2,fixOrderFixed1,fixOrderFixed2,fixOrderFixedI2,fixOrderFixedI1,fixOrderFixedJ1,fixOrderFixedJ2 >>(warning_name);
+#expand fixOrder1,fixOrder2,fixOrderFixed1,fixOrderFixed2,fixOrderFixedI2,fixOrderFixedI1,fixOrderFixedJ1,fixOrderFixedJ2 >>(warning_name);
 

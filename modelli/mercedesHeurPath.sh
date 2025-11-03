@@ -8,6 +8,8 @@
 #SBATCH --array=0-500%60                # Numero di job da eseguire
 
 # Crea una lista di tutti i file .dat nella directory "data/"
+reduced=0
+
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/obtainedByHeur/metroplex*.dat))
 # FILES=(/home/magi/UAMdeconflictionMasterThesis/modelli/data/*.dat)
 
@@ -18,7 +20,7 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 datFileBase=$(basename "$datFile" .dat)
 
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
 
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/obtainedByHeur/airport*.dat))
 # FILES=(/home/magi/UAMdeconflictionMasterThesis/modelli/data/*.dat)
@@ -30,7 +32,7 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 datFileBase=$(basename "$datFile" .dat)
 
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
 
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/obtainedByHeur/grid*.dat))
 # FILES=(/home/magi/UAMdeconflictionMasterThesis/modelli/data/*.dat)
@@ -42,8 +44,7 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 datFileBase=$(basename "$datFile" .dat)
 
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
-
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_heurPath.run
 
 
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/obtainedByHeur/AP/*.dat))
@@ -55,7 +56,6 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 # Ottieni il percorso assoluto del file corrente
 datFileBase=$(basename "$datFile" .dat)
 
-reduced=0
 
 # Esegui AMPL con il file .dat corrente
 absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_AP_heurPath.run
