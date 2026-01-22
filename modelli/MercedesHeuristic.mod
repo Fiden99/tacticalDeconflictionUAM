@@ -79,8 +79,28 @@ set mergeSetOf=setof{(i,j,x,dA,x1,x2) in mergeConf} (i,j,x,dA);
 
 set diver1 = setof{(i,j,x,dA,x1,x2) in diver1Conf} (i,j,x,x1,x2);
 set diver2 = setof{(i,j,x,dA,x1,x2) in diver2Conf diff diver1Conf} (i,j,x,x1,x2);
-set merge  = setof{(i,j,x,dA,x1,x2) in mergeConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf)} (i,j,x,x1,x2);
-set split  = setof{(i,j,x,dA,x1,x2) in splitConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf)} (i,j,x,x1,x2);
+
+set cleanMerge = setof{(i,j,x,dA,x1,x2) in mergeConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf)} (i,j,x,x1,x2);
+set tempMerge = setof{(i,j,x,x1,x2) in cleanMerge, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2 : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5);
+set toDeleteMerge = setof {(i,j,x,x1,x2,a4,a5,b4,b5) in tempMerge: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set merge = cleanMerge diff toDeleteMerge;
+
+set cleanSplit = setof{(i,j,x,dA,x1,x2) in splitConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf)} (i,j,x,x1,x2);
+set tempSplit = 
+	if card(merge) > 0 then
+		setof{(i,j,x,x1,x2) in cleanSplit, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2, (c1,c2,c3,c4,c5) in merge : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3 and i==c1 and j==c2 and x==c3} (i,j,x,x1,x2,a4,a5,b4,b5,c4,c5)
+	else
+		setof{(i,j,x,x1,x2) in cleanSplit, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2 : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5,0,0);
+
+set toDeleteSplit = 
+	if card(merge) > 0  then 
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplit: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5]) or (angle[x,x1,x2]<=angle[x,c4,c5])} (i,j,x,x1,x2)
+	else
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplit: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set split = cleanSplit diff toDeleteSplit;
+
+#set trail1 = setof{(i,j,x,dA,y) in trailConf:(i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf )} (i,j,x,y);
+#set trail2 = setof{(i,j,x,dA,y) in trailConf:(i,j,y,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf/*  union trail1SetOf */)} (i,j,x,y);
 set trail1 = setof{(i,j,x,dA,y) in trailConf:(i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf )} (i,j,x,y);
 set trail2 = setof{(i,j,x,dA,y) in trailConf:(i,j,y,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf/*  union trail1SetOf */)} (i,j,x,y);
 

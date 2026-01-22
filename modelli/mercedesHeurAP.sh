@@ -16,6 +16,16 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 
 # Ottieni il percorso assoluto del file corrente
 datFileBase=$(basename "$datFile" .dat)
-
+for gap in {1,2,5,10}
+do
+    for alpha in {4,9,16,25,100}
+    do
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchAP.run
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchAP.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicAPGreater.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicAPSmaller.run
+
+    done
+done

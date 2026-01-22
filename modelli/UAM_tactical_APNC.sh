@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1                      # Numero di task per job
 #SBATCH --cpus-per-task=1               # Numero di core per job
 #SBATCH --time=96:00:00                 # Tempo massimo per ogni job 
-#SBATCH --array=0-300%10                # Numero di job da eseguire
+#SBATCH --array=0-300%30                # Numero di job da eseguire
 
 # Crea una lista di tutti i file .dat nella directory "data/"
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/mercedesTD/AP/*.dat))
@@ -16,6 +16,22 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 
 # Ottieni il percorso assoluto del file corrente
 datFileBase=$(basename "$datFile" .dat)
+
+reduced=0
+
+# Esegui AMPL con il file .dat corrente
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_AP.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_APNC.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_AP_Fixed.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_APNC_Fixed.run
+
+reduced=1
+
+# Esegui AMPL con il file .dat corrente
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_AP.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_APNC.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_AP_Fixed.run
+absPath=$PWD datFile=$datFileBase rTini=$reduced ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_mercedes_run/UAM_tactical_APNC_Fixed.run
 
 reduced=2
 

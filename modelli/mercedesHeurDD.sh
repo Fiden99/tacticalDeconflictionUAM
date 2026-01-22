@@ -18,8 +18,18 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 datFileBase=$(basename "$datFile" .dat)
 
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+for gap in {1,2,5,10}
+do
+    for alpha in {4,9,16,25,100}
+    do
 
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDGreater.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDSmaller.run
+    done
+done
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/mercedesTDHeur/airport*.dat))
 # FILES=(/home/magi/UAMdeconflictionMasterThesis/modelli/data/*.dat)
 
@@ -29,7 +39,18 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 # Ottieni il percorso assoluto del file corrente
 datFileBase=$(basename "$datFile" .dat)
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+for gap in {1,2,5,10}
+do
+    for alpha in {4,9,16,25,100}
+    do
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDGreater.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDSmaller.run
+    done
+done
 
 
 FILES=($(ls /home/magi/UAMdeconflictionMasterThesis/modelli/data/mercedesTDHeur/grid*.dat))
@@ -41,7 +62,18 @@ datFile=${FILES[$SLURM_ARRAY_TASK_ID]}
 # Ottieni il percorso assoluto del file corrente
 datFileBase=$(basename "$datFile" .dat)
 # Esegui AMPL con il file .dat corrente
-absPath=$PWD datFile=$datFileBase ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+for gap in {1,2,5,10}
+do
+    for alpha in {4,9,16,25,100}
+    do
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicSbatchDD.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDGreater.run
+
+        absPath=$PWD datFile=$datFileBase alpha=$alpha gapUnf=$gap ampl /home/magi/UAMdeconflictionMasterThesis/modelli/UAM_heur_run/mercedesHeuristicDDSmaller.run
+    done
+done
 
 
 

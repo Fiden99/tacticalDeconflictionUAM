@@ -103,10 +103,167 @@ set mergeSetOf=setof{(i,j,x,dA,x1,x2) in mergeConf} (i,j,x,dA);
 
 set diver1 = setof{(i,j,x,dA,x1,x2) in diver1Conf} (i,j,x,x1,x2);
 set diver2 = setof{(i,j,x,dA,x1,x2) in diver2Conf diff diver1Conf} (i,j,x,x1,x2);
-set merge1 = setof{(i,j,x,dA,x1,x2) in mergeConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf)} (i,j,x,x1,x2);
-set split1 = setof{(i,j,x,dA,x1,x2) in splitConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf)} (i,j,x,x1,x2);
+
+set cleanMerge = setof{(i,j,x,dA,x1,x2) in mergeConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf)} (i,j,x,x1,x2);
+set tempMerge = setof{(i,j,x,x1,x2) in cleanMerge, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2 : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5);
+set toDeleteMerge = setof {(i,j,x,x1,x2,a4,a5,b4,b5) in tempMerge: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set merge1 = cleanMerge diff toDeleteMerge;
+
+set cleanSplit = setof{(i,j,x,dA,x1,x2) in splitConf: (i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf)} (i,j,x,x1,x2);
+set tempSplit = 
+	if card(merge1) > 0 then
+		setof{(i,j,x,x1,x2) in cleanSplit, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2, (c1,c2,c3,c4,c5) in merge1 : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3 and i==c1 and j==c2 and x==c3} (i,j,x,x1,x2,a4,a5,b4,b5,c4,c5)
+	else
+		setof{(i,j,x,x1,x2) in cleanSplit, (a1,a2,a3,a4,a5) in diver1, (b1,b2,b3,b4,b5) in diver2 : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5,0,0);
+
+set toDeleteSplit = 
+	if card(merge1) > 0  then 
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplit: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5]) or (angle[x,x1,x2]<=angle[x,c4,c5])} (i,j,x,x1,x2)
+	else
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplit: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set split1 = cleanSplit diff toDeleteSplit;
+
 set trail1 = setof{(i,j,x,dA,y) in trailConf:(i,j,x,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf )} (i,j,x,y);
 set trail2 = setof{(i,j,x,dA,y) in trailConf:(i,j,y,dA) not in (diver1SetOf union diver2SetOf union mergeSetOf union splitSetOf/*  union trail1SetOf */)} (i,j,x,y);
+
+
+
+#fixedI 
+
+set AllFixedIConflicts={i in fixedF, j in freeF, x in V, differentAngle:(i,x) in FV and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))};
+set diver1ConfFixedI={(i,j,x,dA) in AllFixedIConflicts, (x,x1) in E, (x2,x) in E:  wFixed[x,x1,i] == 1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver2ConfFixedI={(i,j,x,dA) in AllFixedIConflicts, (x,x1) in E, (x2,x) in E:  wFixed[x2,x,i] == 1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver1SetOfFixedI=setof{(i,j,x,dA,x1,x2) in diver1ConfFixedI} (i,j,x,dA);
+set diver2SetOfFixedI=setof{(i,j,x,dA,x1,x2) in diver2ConfFixedI} (i,j,x,dA);
+
+set trailConfFixedI={(i,j,x,dA) in AllFixedIConflicts,(i,j,y,dA) in AllFixedIConflicts: (x,y) in E and i<>j and wFixed[x,y,i]==1};
+set trail1SetOfFixedI=setof{(i,j,x,dA,y) in trailConfFixedI} (i,j,x,dA);
+set trail2SetOfFixedI=setof{(i,j,x,dA,y) in trailConfFixedI} (i,j,y,dA);
+
+set splitConfFixedI={(i,j,x,dA) in AllFixedIConflicts,(x,x1) in E, (x,x2) in E: i<>j and x1<>x2 and wFixed[x,x1,i]==1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set splitSetOfFixedI=setof{(i,j,x,dA,x1,x2) in splitConfFixedI} (i,j,x,dA);
+
+set mergeConfFixedI={(i,j,x,dA) in AllFixedIConflicts,(x1,x) in E, (x2,x) in E: x1<>x2 and i<>j and wFixed[x1,x,i]==1  and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set mergeSetOfFixedI=setof{(i,j,x,dA,x1,x2) in mergeConfFixedI} (i,j,x,dA);
+
+
+
+set diver1FixedI = setof{(i,j,x,dA,x1,x2) in diver1ConfFixedI} (i,j,x,x1,x2);
+set diver2FixedI = setof{(i,j,x,dA,x1,x2) in diver2ConfFixedI diff diver1ConfFixedI} (i,j,x,x1,x2);
+
+set cleanMergeFixedI = setof{(i,j,x,dA,x1,x2) in mergeConfFixedI: (i,j,x,dA) not in (diver1SetOfFixedI union diver2SetOfFixedI)} (i,j,x,x1,x2);
+set tempMergeFixedI = setof{(i,j,x,x1,x2) in cleanMergeFixedI, (a1,a2,a3,a4,a5) in diver1FixedI, (b1,b2,b3,b4,b5) in diver2FixedI : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5);
+set toDeleteMergeFixedI = setof {(i,j,x,x1,x2,a4,a5,b4,b5) in tempMergeFixedI: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set merge1FixedI = cleanMergeFixedI diff toDeleteMergeFixedI;
+
+set cleanSplitFixedI = setof{(i,j,x,dA,x1,x2) in splitConfFixedI: (i,j,x,dA) not in (diver1SetOfFixedI union diver2SetOfFixedI union mergeSetOfFixedI)} (i,j,x,x1,x2);
+set tempSplitFixedI = 
+	if card(merge1FixedI) > 0 then
+		setof{(i,j,x,x1,x2) in cleanSplitFixedI, (a1,a2,a3,a4,a5) in diver1FixedI, (b1,b2,b3,b4,b5) in diver2FixedI, (c1,c2,c3,c4,c5) in merge1FixedI : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3 and i==c1 and j==c2 and x==c3} (i,j,x,x1,x2,a4,a5,b4,b5,c4,c5)
+	else
+		setof{(i,j,x,x1,x2) in cleanSplitFixedI, (a1,a2,a3,a4,a5) in diver1FixedI, (b1,b2,b3,b4,b5) in diver2FixedI : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5,0,0);
+
+set toDeleteSplitFixedI = 
+	if card(merge1FixedI) > 0  then
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFixedI: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5]) or (angle[x,x1,x2]<=angle[x,c4,c5])} (i,j,x,x1,x2)
+	else
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFixedI: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set split1FixedI = cleanSplitFixedI diff toDeleteSplitFixedI;
+
+set trail1FixedI = setof{(i,j,x,dA,y) in trailConfFixedI:(i,j,x,dA) not in (diver1SetOfFixedI union diver2SetOfFixedI union mergeSetOfFixedI union splitSetOfFixedI )} (i,j,x,y);
+set trail2FixedI = setof{(i,j,x,dA,y) in trailConfFixedI:(i,j,y,dA) not in (diver1SetOfFixedI union diver2SetOfFixedI union mergeSetOfFixedI union splitSetOfFixedI )} (i,j,x,y);
+
+#FixedJ
+
+set AllFixedJConflicts={i in freeF, j in fixedF, x in V, differentAngle:(j,x) in FV and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))};
+set diver1ConfFixedJ={(i,j,x,dA) in AllFixedJConflicts, (x,x1) in E, (x2,x) in E: x1<>x2 and wFixed[x2,x,j] == 1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver2ConfFixedJ={(i,j,x,dA) in AllFixedJConflicts, (x,x1) in E, (x2,x) in E: x1<>x2 and wFixed[x,x1,j] == 1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver1SetOfFixedJ=setof{(i,j,x,dA,x1,x2) in diver1ConfFixedJ} (i,j,x,dA);
+set diver2SetOfFixedJ=setof{(i,j,x,dA,x1,x2) in diver2ConfFixedJ} (i,j,x,dA);
+
+set trailConfFixedJ={(i,j,x,dA) in AllFixedJConflicts,(i,j,y,dA) in AllFixedJConflicts: (x,y) in E and i<>j and wFixed[x,y,j]==1};
+set trail1SetOfFixedJ=setof{(i,j,x,dA,y) in trailConfFixedJ} (i,j,x,dA);
+set trail2SetOfFixedJ=setof{(i,j,x,dA,y) in trailConfFixedJ} (i,j,y,dA);
+
+set splitConfFixedJ={(i,j,x,dA) in AllFixedJConflicts,(x,x1) in E, (x,x2) in E: i<>j and x1<>x2 and wFixed[x,x1,j]==1 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set splitSetOfFixedJ=setof{(i,j,x,dA,x1,x2) in splitConfFixedJ} (i,j,x,dA);
+
+set mergeConfFixedJ={(i,j,x,dA) in AllFixedJConflicts,(x1,x) in E, (x2,x) in E: x1<>x2 and i<>j and wFixed[x1,x,j]==1  and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set mergeSetOfFixedJ=setof{(i,j,x,dA,x1,x2) in mergeConfFixedJ} (i,j,x,dA);
+
+set diver1FixedJ = setof{(i,j,x,dA,x1,x2) in diver1ConfFixedJ} (i,j,x,x1,x2);
+set diver2FixedJ = setof{(i,j,x,dA,x1,x2) in diver2ConfFixedJ diff diver1ConfFixedJ} (i,j,x,x1,x2);
+
+set cleanMergeFixedJ = setof{(i,j,x,dA,x1,x2) in mergeConfFixedJ: (i,j,x,dA) not in (diver1SetOfFixedJ union diver2SetOfFixedJ)} (i,j,x,x1,x2);
+set tempMergeFixedJ = setof{(i,j,x,x1,x2) in cleanMergeFixedJ, (a1,a2,a3,a4,a5) in diver1FixedJ, (b1,b2,b3,b4,b5) in diver2FixedJ : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5);
+set toDeleteMergeFixedJ = setof {(i,j,x,x1,x2,a4,a5,b4,b5) in tempMergeFixedJ: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set merge1FixedJ = cleanMergeFixedJ diff toDeleteMergeFixedJ;
+
+set cleanSplitFixedJ = setof{(i,j,x,dA,x1,x2) in splitConfFixedJ: (i,j,x,dA) not in (diver1SetOfFixedJ union diver2SetOfFixedJ union mergeSetOfFixedJ)} (i,j,x,x1,x2);
+set tempSplitFixedJ = 
+	if card(merge1FixedJ) > 0 then
+		setof{(i,j,x,x1,x2) in cleanSplitFixedJ, (a1,a2,a3,a4,a5) in diver1FixedJ, (b1,b2,b3,b4,b5) in diver2FixedJ, (c1,c2,c3,c4,c5) in merge1FixedJ : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3 and i==c1 and j==c2 and x==c3} (i,j,x,x1,x2,a4,a5,b4,b5,c4,c5)
+	else
+		setof{(i,j,x,x1,x2) in cleanSplitFixedJ, (a1,a2,a3,a4,a5) in diver1FixedJ, (b1,b2,b3,b4,b5) in diver2FixedJ : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5,0,0);
+
+set toDeleteSplitFixedJ = 
+	if card(merge1FixedJ) > 0  then
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFixedJ: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5]) or (angle[x,x1,x2]<=angle[x,c4,c5])} (i,j,x,x1,x2)
+	else
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFixedJ: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set split1FixedJ = cleanSplitFixedJ diff toDeleteSplitFixedJ;
+
+set trail1FixedJ = setof{(i,j,x,dA,y) in trailConfFixedJ:(i,j,x,dA) not in (diver1SetOfFixedJ union diver2SetOfFixedJ union mergeSetOfFixedJ union splitSetOfFixedJ )} (i,j,x,y);
+set trail2FixedJ = setof{(i,j,x,dA,y) in trailConfFixedJ:(i,j,y,dA) not in (diver1SetOfFixedJ union diver2SetOfFixedJ union mergeSetOfFixedJ union splitSetOfFixedJ )} (i,j,x,y);
+
+#both free
+/*
+set FreeConflicts={i in freeF, j in freeF, x in V, differentAngle: i<>j and t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j)};
+set diver1ConfFree={(i,j,x,dA) in FreeConflicts, (x,x1) in E, (x2,x) in E: x1<>x2 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver2ConfFree={(i,j,x,dA) in FreeConflicts, (x,x1) in E, (x2,x) in E: x1<>x2 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set diver1SetOfFree=setof{(i,j,x,dA,x1,x2) in diver1ConfFree} (i,j,x,dA);
+set diver2SetOfFree=setof{(i,j,x,dA,x1,x2) in diver2ConfFree} (i,j,x,dA);
+
+set trailConfFree={(i,j,x,dA) in FreeConflicts,(i,j,y,dA) in FreeConflicts: (x,y) in E and i<>j};
+set trail1SetOfFree=setof{(i,j,x,dA,y) in trailConfFree} (i,j,x,dA);
+set trail2SetOfFree=setof{(i,j,x,dA,y) in trailConfFree} (i,j,y,dA);
+
+set splitConfFree={(i,j,x,dA) in FreeConflicts,(x,x1) in E, (x,x2) in E: i<>j and x1<>x2 and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set splitSetOfFree=setof{(i,j,x,dA,x1,x2) in splitConfFree} (i,j,x,dA);
+
+set mergeConfFree={(i,j,x,dA) in FreeConflicts,(x1,x) in E, (x2,x) in E: x1<>x2 and i<>j and (x,x1,x2) in conflictsNodes and angle[x,x1,x2]==dA};
+set mergeSetOfFree=setof{(i,j,x,dA,x1,x2) in mergeConfFree} (i,j,x,dA);
+
+set diver1Free = setof{(i,j,x,dA,x1,x2) in diver1ConfFree} (i,j,x,x1,x2);
+set diver2Free = setof{(i,j,x,dA,x1,x2) in diver2ConfFree diff diver1ConfFree} (i,j,x,x1,x2);
+
+set cleanMergeFree = setof{(i,j,x,dA,x1,x2) in mergeConfFree: (i,j,x,dA) not in (diver1SetOfFree union diver2SetOfFree)} (i,j,x,x1,x2);
+set tempMergeFree = setof{(i,j,x,x1,x2) in cleanMergeFree, (a1,a2,a3,a4,a5) in diver1Free, (b1,b2,b3,b4,b5) in diver2Free : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5);
+set toDeleteMergeFree = setof {(i,j,x,x1,x2,a4,a5,b4,b5) in tempMergeFree: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set merge1Free = cleanMergeFree diff toDeleteMergeFree;
+
+set cleanSplitFree = setof{(i,j,x,dA,x1,x2) in splitConfFree: (i,j,x,dA) not in (diver1SetOfFree union diver2SetOfFree union mergeSetOfFree)} (i,j,x,x1,x2);
+set tempSplitFree = 
+	if card(merge1Free) > 0 then
+		setof{(i,j,x,x1,x2) in cleanSplitFree, (a1,a2,a3,a4,a5) in diver1Free, (b1,b2,b3,b4,b5) in diver2Free, (c1,c2,c3,c4,c5) in merge1Free : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3 and i==c1 and j==c2 and x==c3} (i,j,x,x1,x2,a4,a5,b4,b5,c4,c5)
+	else
+		setof{(i,j,x,x1,x2) in cleanSplitFree, (a1,a2,a3,a4,a5) in diver1Free, (b1,b2,b3,b4,b5) in diver2Free : i==a1 and j==a2 and x==a3 and i==b1 and j==b2 and x==b3} (i,j,x,x1,x2,a4,a5,b4,b5,0,0);
+
+set toDeleteSplitFree = 
+	if card(merge1Free) > 0  then
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFree: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5]) or (angle[x,x1,x2]<=angle[x,c4,c5])} (i,j,x,x1,x2)
+	else
+		setof {(i,j,x,x1,x2,a4,a5,b4,b5,c4,c5) in tempSplitFree: (angle[x,x1,x2] <= 2*angle[x,a4,a5]) or (angle[x,x1,x2] <= 2*angle[x,b4,b5])} (i,j,x,x1,x2);
+set split1Free = cleanSplitFree diff toDeleteSplitFree;
+
+set trail1Free = setof{(i,j,x,dA,y) in trailConfFree:(i,j,x,dA) not in (diver1SetOfFree union diver2SetOfFree union mergeSetOfFree union splitSetOfFree )} (i,j,x,y);
+set trail2Free = setof{(i,j,x,dA,y) in trailConfFree:(i,j,y,dA) not in (diver1SetOfFree union diver2SetOfFree union mergeSetOfFree union splitSetOfFree )} (i,j,x,y);
+*/
+
+
+
+
+
 
 
 #constrains
@@ -168,8 +325,10 @@ t_up_fixed[f,y]=d[x,y]/v_min + t_ear_fixed[f,x];
 
 # conflicts
 
+#subject to trail13{(i,j,x,y) in trail1Free}:
 subject to trail13 {i in freeF,j in freeF, (x,y) in E: i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,y,i] + w[x,y,j] == 2) ==> (t_ear[j,x]-t_lat[i,x] >= D/v_min* passFirst[i,j,x] -bigM* (1-passFirst[i,j,x]));
+#subject to trail14{(i,j,x,y) in trail1Free}:
 subject to trail14 {i in freeF,j in freeF, (x,y) in E: i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,y,i] + w[x,y,j] == 2) ==> (t_ear[i,x]-t_lat[j,x]>=D/v_min* (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x]);
 
@@ -180,19 +339,25 @@ t_ear_fixed[j,x]-t_lat_fixed[i,x] >= D/v_min * pass2Fixeds[i,j,x] - bigM* (1-pas
 subject to trail14Fixed {(i,j,x,y) in trail1}:
 t_ear_fixed[i,x]-t_lat_fixed[j,x]>=D/v_min* (1-pass2Fixeds[i,j,x]) - bigM*pass2Fixeds[i,j,x];
 
-subject to trail13FixedI {i in fixedF,j in freeF, (x,y) in E: (wFixed[x,y,i]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail13FixedI {i in fixedF,j in freeF, (x,y) in E: (wFixed[x,y,i]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail13FixedI {(i,j,x,y) in trail1FixedI}:
 t_ear[j,x]-t_lat_fixed[i,x] >= D/v_min* passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x,y,j]);
-subject to trail14FixedI {i in fixedF,j in freeF, (x,y) in E: (wFixed[x,y,i]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail14FixedI {i in fixedF,j in freeF, (x,y) in E: (wFixed[x,y,i]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail14FixedI {(i,j,x,y) in trail1FixedI}:
 t_ear_fixed[i,x]-t_lat[j,x]>=D/v_min* (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x,y,j]);
 
-subject to trail13FixedJ {i in freeF,j in fixedF, (x,y) in E: (wFixed[x,y,j]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail13FixedJ {i in freeF,j in fixedF, (x,y) in E: (wFixed[x,y,j]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail13FixedJ {(i,j,x,y) in trail1FixedJ}:
 t_ear_fixed[j,x]-t_lat[i,x] >= D/v_min* passJFixed[i,j,x] -bigM* (1-passJFixed[i,j,x]) - bigM*(1-w[x,y,i]);
-subject to trail14FixedJ {i in freeF,j in fixedF, (x,y) in E: (wFixed[x,y,j]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail14FixedJ {i in freeF,j in fixedF, (x,y) in E: (wFixed[x,y,j]==1) and i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail14FixedJ {(i,j,x,y) in trail1FixedJ}:
 t_ear[i,x]-t_lat_fixed[j,x]>=D/v_min* (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x,y,i]);
 
 
+#subject to trail23 {(i,j,x,y) in trail2Free}:
 subject to trail23 {i in freeF,j in freeF, (x,y) in E: i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,y,i] + w[x,y,j] == 2) ==> t_ear[j,y]-t_lat[i,y]>= D/v_min* passFirst[i,j,x] - bigM*(1-passFirst[i,j,x]);
+#subject to trail24 {(i,j,x,y) in trail2Free}:
 subject to trail24 {i in freeF,j in freeF, (x,y) in E: i<>j and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,y,i] + w[x,y,j] == 2) ==> t_ear[i,y]-t_lat[j,y]>= D/v_min * (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x];
 
@@ -203,17 +368,22 @@ t_ear_fixed[j,y]-t_lat_fixed[i,y]>= D/v_min* pass2Fixeds[i,j,x] - bigM*(1-pass2F
 subject to trail24Fixed {(i,j,x,y) in trail2}:
 t_ear_fixed[i,y]-t_lat_fixed[j,y]>= D/v_min * (1-pass2Fixeds[i,j,x]) - bigM*pass2Fixeds[i,j,x];
 
-subject to trail23FixedI {i in fixedF,j in freeF, (x,y) in E: i<>j and (wFixed[x,y,i]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail23FixedI {i in fixedF,j in freeF, (x,y) in E: i<>j and (wFixed[x,y,i]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail23FixedI {(i,j,x,y) in trail2FixedI}:
 t_ear[j,y]-t_lat_fixed[i,y]>= D/v_min* passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x,y,j]);
-subject to trail24FixedI {i in fixedF,j in freeF, (x,y) in E: i<>j and (wFixed[x,y,i]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail24FixedI {i in fixedF,j in freeF, (x,y) in E: i<>j and (wFixed[x,y,i]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail24FixedI {(i,j,x,y) in trail2FixedI}:
 t_ear_fixed[i,y]-t_lat[j,y]>= D/v_min * (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x,y,j]);
 
-subject to trail23FixedJ {i in freeF,j in fixedF, (x,y) in E: i<>j and (wFixed[x,y,j]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail23FixedJ {i in freeF,j in fixedF, (x,y) in E: i<>j and (wFixed[x,y,j]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail23FixedJ {(i,j,x,y) in trail2FixedJ}:
 t_ear_fixed[j,y]-t_lat[i,y]>= D/v_min* passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x,y,i]);
-subject to trail24FixedJ {i in freeF,j in fixedF, (x,y) in E: i<>j and (wFixed[x,y,j]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to trail24FixedJ {i in freeF,j in fixedF, (x,y) in E: i<>j and (wFixed[x,y,j]==1) and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to trail24FixedJ {(i,j,x,y) in trail2FixedJ}:
 t_ear[i,y]-t_lat_fixed[j,y]>= D/v_min * (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x,y,i]);
 
 
+#subject to merge3 {(i,j,x,x1,x2) in merge1Free}:
 subject to merge3 {i in freeF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x1,x,i]+w[x2,x,j] == 2) ==> (t_ear[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min * passFirst[i,j,x] - bigM*(1-passFirst[i,j,x]));
 #subject to merge3_1 {i in freeF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
@@ -226,18 +396,20 @@ t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min * pass2Fixeds[i,j,x] 
 #subject to merge3_1Fixed {(i,j,x,x1,x2) in merge2}:
 #t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min * pass2Fixeds[i,j,x] - bigM*(1-pass2Fixeds[i,j,x]);
 
-subject to merge3FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to merge3FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to merge3FixedI {(i,j,x,x1,x2) in merge1FixedI}:
 t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min * passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x2,x,j]);
 #subject to merge3_1FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and (wFixed[x1,x,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min * passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x1,x,j]);
 
-subject to merge3FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to merge3FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to merge3FixedJ {(i,j,x,x1,x2) in merge1FixedJ}:
 t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min * passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x1,x,i]);
 #subject to merge3_1FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,j] == 1) and (wFixed[x2,x,j] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min * passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x2,x,i]);
 
 
-
+#subject to merge4 {(i,j,x,x1,x2) in merge1Free}:
 subject to merge4 {i in freeF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x1,x,j]+w[x2,x,i] == 2) ==> (t_ear[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min* (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x]);
 #subject to merge4_1 {i in freeF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
@@ -250,20 +422,24 @@ t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min* (1-pass2Fixeds[i,j,x
 #subject to merge4_1Fixed {(i,j,x,x1,x2) in merge2}:
 #t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min* (1-pass2Fixeds[i,j,x]) - bigM*pass2Fixeds[i,j,x];
 
-subject to merge4FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to merge4FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to merge4FixedI {(i,j,x,x1,x2) in merge1FixedI}:
 t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min* (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x1,x,j]);
 #subject to merge4_1FixedI {i in fixedF, j in freeF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,i]==1) and (wFixed[x2,x,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min* (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x2,x,j]);
 
-subject to merge4FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to merge4FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x1,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to merge4FixedJ {(i,j,x,x1,x2) in merge1FixedJ}:
 t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min* (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x2,x,i]);
 #subject to merge4_1FixedJ {i in freeF, j in fixedF, x in V,(x1,x) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min* (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] -bigM*(1-w[x1,x,i]);
 
 
 #valutare eliminazione di x<>y
+#subject to diver3{(i,j,x,x1,x2) in diver1Free}:
 subject to diver3 {i in freeF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
 (w[x,x1,i]+w[x2,x,j] == 2) ==> (t_ear[j,x]- t_lat[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passFirst[i,j,x] - bigM*(1-passFirst[i,j,x])) ;
+#subject to diver3_1{(i,j,x,x1,x2) in diver2Free}:
 subject to diver3_1 {i in freeF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
 (w[x,x1,j]+w[x2,x,i] == 2 and w[x,x1,i]+w[x2,x,j] < 2) ==> (t_ear[j,x]- t_lat[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passFirst[i,j,x] - bigM*(1-passFirst[i,j,x])) ;
 
@@ -274,19 +450,24 @@ t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*pass2Fixeds
 subject to diver3_1Fixed {(i,j,x,x1,x2) in diver2}: #and x <>e[i]
 t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*pass2Fixeds[i,j,x] - bigM*(1-pass2Fixeds[i,j,x]) ;
 
-subject to diver3FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+#subject to diver3FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+subject to diver3FixedI {(i,j,x,x1,x2) in diver1FixedI}: #and x <>e[i]
 t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x2,x,j]) ;
-subject to diver3_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and (wFixed[x,x1,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+#subject to diver3_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and (wFixed[x,x1,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+subject to diver3_1FixedI {(i,j,x,x1,x2) in diver2FixedI}: #and x <>e[i]
 t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x,x1,j]) ;
 
-subject to diver3FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+#subject to diver3FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+subject to diver3FixedJ {(i,j,x,x1,x2) in diver1FixedJ}: #and x <>e[i]
 t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x,x1,i]) ;
-subject to diver3_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j]==1) and(wFixed[x2,x,j]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+#subject to diver3_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j]==1) and(wFixed[x2,x,j]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <>e[i]
+subject to diver3_1FixedJ {(i,j,x,x1,x2) in diver2FixedJ}: #and x <>e[i]
 t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)*passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x2,x,i]) ;
 
-
+#subject to diver4 {(i,j,x,x1,x2) in diver1Free}:
 subject to diver4 {i in freeF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes  and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
 (w[x,x1,i]+w[x2,x,j] == 2) ==> (t_ear[i,x]- t_lat[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x]);
+#subject to diver4_1 {(i,j,x,x1,x2) in diver2Free}:
 subject to diver4_1 {i in freeF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
 (w[x,x1,j]+w[x2,x,i] == 2 and w[x,x1,i]+w[x2,x,j] < 2) ==> (t_ear[i,x]- t_lat[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x]);
 
@@ -297,18 +478,23 @@ t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-pass2Fi
 subject to diver4_1Fixed {(i,j,x,x1,x2) in diver2}: #and x <> e[j]
 t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-pass2Fixeds[i,j,x]) - bigM*pass2Fixeds[i,j,x];
 
-subject to diver4FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+#subject to diver4FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+subject to diver4FixedI {(i,j,x,x1,x2) in diver1FixedI}: #and x <> e[j]
 t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x2,x,j]);
-subject to diver4_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and (wFixed[x,x1,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+#subject to diver4_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,i]==1) and (wFixed[x,x1,i]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+subject to diver4_1FixedI {(i,j,x,x1,x2) in diver2FixedI}: #and x <> e[j]
 t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x,x1,j]);
 
-subject to diver4FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+#subject to diver4FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x2,x,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+subject to diver4FixedJ {(i,j,x,x1,x2) in diver1FixedJ}:
 t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x,x1,i]);
-subject to diver4_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j] == 1) and (wFixed[x2,x,j] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+#subject to diver4_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x2,x) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j] == 1) and (wFixed[x2,x,j] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}: #and x <> e[j]
+subject to diver4_1FixedJ {(i,j,x,x1,x2) in diver2FixedJ}: 
 t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*(D/v_min+D/v_min)* (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x2,x,i]);
 
 
 
+#subject to split3 {(i,j,x,x1,x2) in split1Free}:
 subject to split3 {i in freeF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,x1,i]+w[x,x2,j] == 2) ==> (t_ear[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min*passFirst[i,j,x] - bigM*(1-passFirst[i,j,x]));
 #subject to split3_1 {i in freeF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
@@ -321,17 +507,19 @@ t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min*pass2Fixeds[i,j,x] - 
 #subject to split3_1Fixed {(i,j,x,x1,x2) in split2}:
 #t_ear_fixed[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min*pass2Fixeds[i,j,x] - bigM*(1-pass2Fixeds[i,j,x]);
 
-subject to split3FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to split3FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to split3FixedI {(i,j,x,x1,x2) in split1FixedI}:
 t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min*passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x,x2,j]);
 #subject to split3_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,i] == 1) and (wFixed[x,x1,i] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear[j,x]- t_lat_fixed[i,x]>=angle[x,x1,x2]*D/v_min*passIFixed[i,j,x] - bigM*(1-passIFixed[i,j,x]) - bigM*(1-w[x,x1,j]);
 
-subject to split3FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,j]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to split3FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,j]==1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to split3FixedJ {(i,j,x,x1,x2) in split1FixedJ}:
 t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min*passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x,x1,i]);
 #subject to split3_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j] == 1) and (wFixed[x,x2,j]==0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear_fixed[j,x]- t_lat[i,x]>=angle[x,x1,x2]*D/v_min*passJFixed[i,j,x] - bigM*(1-passJFixed[i,j,x]) - bigM*(1-w[x,x2,i]);
 
-
+#subject to split4 {(i,j,x,x1,x2) in split1Free}:
 subject to split4 {i in freeF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 (w[x,x1,i]+w[x,x2,j] == 2) ==> (t_ear[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min * (1-passFirst[i,j,x]) - bigM*passFirst[i,j,x]);
 #subject to split4_1 {i in freeF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
@@ -344,12 +532,14 @@ t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min * (1-pass2Fixeds[i,j,
 #subject to split4_1Fixed {(i,j,x,x1,x2) in split2}:
 #t_ear_fixed[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min * (1-pass2Fixeds[i,j,x]) - bigM*pass2Fixeds[i,j,x];
 
-subject to split4FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to split4FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,i] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to split4FixedI {(i,j,x,x1,x2) in split1FixedI}:
 t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min * (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x,x2,j]);
 #subject to split4_1FixedI {i in fixedF, j in freeF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,i] == 1) and (wFixed[x,x1,i] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear_fixed[i,x]- t_lat[j,x]>=angle[x,x1,x2]*D/v_min * (1-passIFixed[i,j,x]) - bigM*passIFixed[i,j,x] - bigM*(1-w[x,x1,j]);
 
-subject to split4FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+#subject to split4FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x2,j] == 1) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
+subject to split4FixedJ {(i,j,x,x1,x2) in split1FixedJ}:
 t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min * (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x,x1,i]);
 #subject to split4_1FixedJ {i in freeF, j in fixedF, x in V,(x,x1) in E, (x,x2) in E: (x,x1,x2) in conflictsNodes and (wFixed[x,x1,j] == 1) and (wFixed[x,x2,j] == 0) and i<>j and x1<>x2 and (t_hat_ear[i,x] < t_hat_ear[j,x] or (t_hat_ear[i,x] == t_hat_ear[j,x] and i<j))}:
 #t_ear[i,x]- t_lat_fixed[j,x]>=angle[x,x1,x2]*D/v_min * (1-passJFixed[i,j,x]) - bigM*passJFixed[i,j,x] - bigM*(1-w[x,x2,i]);
